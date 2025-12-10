@@ -1,241 +1,508 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>6-Digit Duel with Registration</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>6-Digit Duel — Team vs Team</title>
 <style>
-  body { font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f0f4f8; margin:0; }
-  .card { background:white; padding:20px 25px; border-radius:12px; box-shadow:0 6px 15px rgba(0,0,0,0.1); width:400px; max-width:95%; text-align:center; }
-  h1 { margin-top:0; font-size:20px; }
-  .digit-row { display:flex; gap:6px; justify-content:center; margin-top:8px; }
-  input[type="text"], input[type="password"] { width:60%; height:35px; font-size:16px; margin-top:8px; text-align:left; padding-left:8px; }
-  input.digit { width:40px; height:45px; font-size:18px; text-align:center; }
-  button { margin-top:12px; padding:10px 15px; font-size:14px; border:none; border-radius:8px; background:#4f46e5; color:white; cursor:pointer; }
-  .result { margin-top:15px; padding:10px; background:#eef2ff; border-radius:8px; font-weight:600; }
-  .match { display:inline-block; padding:6px 10px; margin:3px; border-radius:8px; font-weight:700; }
-  .hit { background:#fee2e2; color:#911; }
-  .ok { background:#ecfdf5; color:#065f46; }
-  .error { color:#b91c1c; margin-top:8px; font-size:13px; }
-  .scoreboard { margin-top:10px; font-size:14px; font-weight:600; }
-  .player-label { margin-top:8px; font-weight:600; }
-  .tab { cursor:pointer; display:inline-block; padding:6px 12px; margin:4px; border-radius:6px; background:#ddd; }
-  .active-tab { background:#4f46e5; color:white; }
+  :root{--accent:#4f46e5;--bg:#f4f7fb;--card:#fff;--ok:#ecfdf5;--hit:#fee2e2}
+  body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:28px}
+  .wrap{width:1100px;max-width:96%;display:grid;grid-template-columns:360px 1fr;gap:20px}
+  .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 20px rgba(20,20,40,0.06)}
+  h2{margin:0 0 12px;font-size:18px}
+  .small{font-size:13px;color:#444}
+  label{display:block;margin-top:8px;margin-bottom:6px;font-weight:600}
+  input[type="text"],input[type="password"],select{width:100%;padding:8px;border-radius:8px;border:1px solid #d0d7e9;font-size:14px}
+  button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+  .muted{color:#666;font-size:13px}
+  .list{max-height:220px;overflow:auto;padding:8px;border-radius:8px;border:1px dashed #e6e9f2;background:#fbfcff}
+  .player-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;margin-bottom:6px;background:#fff}
+  .tag{padding:4px 8px;border-radius:6px;font-weight:700}
+  .teamA{background:#eef2ff;color:#1f3a8a}
+  .teamB{background:#fff0f6;color:#8b1d2c}
+  .controls{display:flex;gap:8px;margin-top:12px}
+  .digit-row{display:flex;gap:8px;justify-content:center;margin-top:8px}
+  input.digit{width:44px;height:48px;font-size:18px;text-align:center;border-radius:8px;border:1px solid #d0d7e9}
+  .center{display:flex;align-items:center;justify-content:center}
+  .result-box{margin-top:12px;padding:12px;border-radius:10px;background:#f7f9ff}
+  .match{display:inline-block;padding:8px 10px;border-radius:8px;margin:6px;font-weight:700}
+  .match.ok{background:var(--ok);color:#065f46}
+  .match.hit{background:var(--hit);color:#911}
+  .scoreboard{margin-top:10px;padding:10px;border-radius:8px;background:#fbfbff;font-weight:700}
+  .overLabel{font-size:18px;font-weight:800;margin-bottom:8px;color:var(--accent)}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .hint{font-size:13px;color:#666}
+  .btn-ghost{background:#eef2ff;color:var(--accent);border:1px solid #dde6ff}
+  .disabled{opacity:0.5;pointer-events:none}
+  footer{font-size:12px;color:#666;margin-top:8px;text-align:center}
 </style>
 </head>
 <body>
+  <div class="wrap">
 
-<div class="card">
+    <!-- LEFT: Registration & Lobby -->
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h2>Players & Registration</h2>
+          <div class="muted">Register accounts then join a team (Team A or Team B)</div>
+        </div>
+        <div class="hint">Over & Team duel</div>
+      </div>
 
-  <!-- Registration/Login Tabs -->
-  <div id="authStage">
-    <div>
-      <span id="loginTab" class="tab active-tab">Login</span>
-      <span id="registerTab" class="tab">Register</span>
+      <!-- Registration -->
+      <div>
+        <label>Register new user</label>
+        <input id="regUser" placeholder="username" type="text">
+        <input id="regPass" placeholder="password" type="password" style="margin-top:8px">
+        <div class="controls">
+          <button id="btnRegister">Register</button>
+          <button id="btnClearUsers" class="btn-ghost">Clear users</button>
+        </div>
+        <div id="regMsg" class="muted" style="margin-top:8px"></div>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2f7">
+
+      <!-- Join lobby -->
+      <div>
+        <label>Join lobby (existing user)</label>
+        <select id="selectUser"><option value="">-- select registered user --</option></select>
+        <div style="margin-top:8px">
+          <label style="font-weight:600">Choose team</label>
+          <label><input type="radio" name="teamChoice" value="A" checked> Team A</label>
+          <label style="margin-left:12px"><input type="radio" name="teamChoice" value="B"> Team B</label>
+        </div>
+        <div class="controls">
+          <button id="btnJoin">Join</button>
+          <button id="btnRemove" class="btn-ghost">Remove selected</button>
+        </div>
+        <div id="joinMsg" class="muted" style="margin-top:8px"></div>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2f7">
+
+      <!-- Players joined -->
+      <div>
+        <label>Players Joined</label>
+        <div id="playersList" class="list"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px">
+          <div class="muted">Team A: <span id="teamACount">0</span></div>
+          <div class="muted">Team B: <span id="teamBCount">0</span></div>
+        </div>
+        <div class="controls" style="margin-top:12px">
+          <button id="btnStart" class="disabled">Start Game</button>
+          <button id="btnResetLobby" class="btn-ghost">Reset Lobby</button>
+        </div>
+        <div class="muted" style="margin-top:8px">At least one player in each team required to start</div>
+      </div>
+
+      <footer>Players and scores persist in your browser (localStorage)</footer>
     </div>
 
-    <div id="loginForm">
-      <input type="text" id="loginUsername" placeholder="Username"><br>
-      <input type="password" id="loginPassword" placeholder="Password"><br>
-      <button id="loginBtn">Login</button>
-      <div id="loginError" class="error"></div>
+    <!-- RIGHT: Game area -->
+    <div class="card">
+      <div class="topbar">
+        <h2>Game: Team A vs Team B</h2>
+        <div id="overDisplay" class="overLabel">Over 1</div>
+      </div>
+
+      <!-- Current match info -->
+      <div id="matchInfo" style="display:block;">
+        <div class="muted">Current players (rotating each Over)</div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <div style="flex:1;padding:10px;border-radius:8px;background:#fbfbff">
+            <div class="small">Team A (Player1)</div>
+            <div id="curP1" style="font-weight:800;margin-top:6px">—</div>
+          </div>
+          <div style="flex:1;padding:10px;border-radius:8px;background:#fbfbff">
+            <div class="small">Team B (Player2)</div>
+            <div id="curP2" style="font-weight:800;margin-top:6px">—</div>
+          </div>
+        </div>
+      </div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eef2f7">
+
+      <!-- Player 1 stage (Team A player enters 6 digits) -->
+      <div id="player1Stage" style="display:none;">
+        <div class="small">Turn: <span id="p1NameLabel"></span></div>
+        <label>Enter 6 digits (each 0–6)</label>
+        <div class="digit-row" id="p1Digits">
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+        </div>
+        <div class="controls center">
+          <button id="p1Submit">Submit</button>
+        </div>
+        <div id="err1" class="muted" style="margin-top:8px;color:#b91c1c"></div>
+      </div>
+
+      <!-- Player 2 stage -->
+      <div id="player2Stage" style="display:none;">
+        <div class="small">Turn: <span id="p2NameLabel"></span></div>
+        <label>Enter 6 digits (each 0–6)</label>
+        <div class="digit-row" id="p2Digits">
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+          <input class="digit" maxlength="1" inputmode="numeric" />
+        </div>
+        <div class="controls center">
+          <button id="p2Submit">Submit</button>
+        </div>
+        <div id="err2" class="muted" style="margin-top:8px;color:#b91c1c"></div>
+      </div>
+
+      <!-- Result -->
+      <div id="resultStage" style="display:none;margin-top:12px">
+        <div id="summary" class="result-box"></div>
+
+        <div style="margin-top:12px">
+          <div class="player-label">Team A digits (<span id="resultP1Name"></span>):</div>
+          <div id="resultP1" class="digit-row"></div>
+
+          <div class="player-label" style="margin-top:8px">Team B digits (<span id="resultP2Name"></span>):</div>
+          <div id="resultP2" class="digit-row"></div>
+        </div>
+
+        <div id="matchDetails" style="margin-top:12px" class="muted"></div>
+
+        <div class="scoreboard" id="scoreboard">Team scores will appear here</div>
+
+        <div class="controls" style="margin-top:12px">
+          <button id="nextOverBtn">Next Over</button>
+          <button id="endGameBtn" class="btn-ghost">End Game</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px" class="muted">Tip: players rotate within their team each Over.</div>
     </div>
 
-    <div id="registerForm" style="display:none;">
-      <input type="text" id="regUsername" placeholder="New Username"><br>
-      <input type="password" id="regPassword" placeholder="Password"><br>
-      <button id="registerBtn">Register</button>
-      <div id="registerError" class="error"></div>
-    </div>
   </div>
-
-  <!-- Game Stage -->
-  <div id="player1Stage" style="display:none;">
-    <label id="p1Label"></label>
-    <div class="digit-row" id="p1Digits">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-    </div>
-    <button id="p1Submit">Submit</button>
-    <div id="error1" class="error"></div>
-  </div>
-
-  <div id="player2Stage" style="display:none;">
-    <label id="p2Label"></label>
-    <div class="digit-row" id="p2Digits">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-      <input class="digit" maxlength="1" type="text">
-    </div>
-    <button id="p2Submit">Submit</button>
-    <div id="error2" class="error"></div>
-  </div>
-
-  <!-- Result Stage -->
-  <div id="resultStage" style="display:none;">
-    <div id="summary" class="result"></div>
-
-    <div class="player-label" id="player1ResultLabel"></div>
-    <div id="player1Result" class="digit-row"></div>
-
-    <div class="player-label" id="player2ResultLabel"></div>
-    <div id="player2Result" class="digit-row"></div>
-
-    <div class="scoreboard" id="scoreboard"></div>
-    <button id="resetBtn">New Round</button>
-  </div>
-
-</div>
 
 <script>
-  // Tabs
-  const loginTab = document.getElementById('loginTab');
-  const registerTab = document.getElementById('registerTab');
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
+/*
+  Full game logic:
+  - Register users stored in localStorage 'users' map: { username: { password, totalScore } }
+  - Lobby: select a registered user and join Team A or Team B. Joined players stored in localStorage 'joined'
+  - Start game requires >=1 player in each team.
+  - Rotation: each team has an index; Team A's player is Player1, Team B's player is Player2.
+  - Over increases after each round. Round scoring: sum of Player1's digits BEFORE the first exact match with Player2.
+  - If no exact match: roundScore = sum of all 6 digits.
+  - Persist totalScore for Player1 in users.
+*/
 
-  loginTab.onclick = () => { loginForm.style.display='block'; registerForm.style.display='none'; loginTab.classList.add('active-tab'); registerTab.classList.remove('active-tab'); };
-  registerTab.onclick = () => { loginForm.style.display='none'; registerForm.style.display='block'; loginTab.classList.remove('active-tab'); registerTab.classList.add('active-tab'); };
+//// Storage helpers
+function getUsers(){ return JSON.parse(localStorage.getItem('game_users')||'{}'); }
+function saveUsers(u){ localStorage.setItem('game_users', JSON.stringify(u)); }
+function getJoined(){ return JSON.parse(localStorage.getItem('game_joined')||'[]'); }
+function saveJoined(j){ localStorage.setItem('game_joined', JSON.stringify(j)); }
 
-  // Auth
-  const loginUsername = document.getElementById('loginUsername');
-  const loginPassword = document.getElementById('loginPassword');
-  const loginBtn = document.getElementById('loginBtn');
-  const loginError = document.getElementById('loginError');
+//// UI elements
+const regUser = document.getElementById('regUser'), regPass = document.getElementById('regPass'), btnRegister = document.getElementById('btnRegister'), regMsg = document.getElementById('regMsg');
+const selectUser = document.getElementById('selectUser'), btnJoin = document.getElementById('btnJoin'), playersList = document.getElementById('playersList'), joinMsg = document.getElementById('joinMsg'), btnRemove = document.getElementById('btnRemove');
+const teamACount = document.getElementById('teamACount'), teamBCount = document.getElementById('teamBCount');
+const btnStart = document.getElementById('btnStart'), btnResetLobby = document.getElementById('btnResetLobby'), btnClearUsers = document.getElementById('btnClearUsers');
 
-  const regUsername = document.getElementById('regUsername');
-  const regPassword = document.getElementById('regPassword');
-  const registerBtn = document.getElementById('registerBtn');
-  const registerError = document.getElementById('registerError');
+const overDisplay = document.getElementById('overDisplay'), curP1 = document.getElementById('curP1'), curP2 = document.getElementById('curP2');
 
-  let player1Name = '', player2Name = '';
+const player1Stage = document.getElementById('player1Stage'), player2Stage = document.getElementById('player2Stage');
+const p1NameLabel = document.getElementById('p1NameLabel'), p2NameLabel = document.getElementById('p2NameLabel');
+const p1Digits = Array.from(document.querySelectorAll('#p1Digits input')), p2Digits = Array.from(document.querySelectorAll('#p2Digits input'));
+const p1Submit = document.getElementById('p1Submit'), p2Submit = document.getElementById('p2Submit');
+const err1 = document.getElementById('err1'), err2 = document.getElementById('err2');
 
-  function getUsers() { return JSON.parse(localStorage.getItem('players')||'{}'); }
-  function saveUsers(users) { localStorage.setItem('players', JSON.stringify(users)); }
+const resultStage = document.getElementById('resultStage'), summary = document.getElementById('summary');
+const resultP1 = document.getElementById('resultP1'), resultP2 = document.getElementById('resultP2');
+const resultP1Name = document.getElementById('resultP1Name'), resultP2Name = document.getElementById('resultP2Name');
+const matchDetails = document.getElementById('matchDetails'), scoreboard = document.getElementById('scoreboard');
+const nextOverBtn = document.getElementById('nextOverBtn'), endGameBtn = document.getElementById('endGameBtn');
 
-  registerBtn.onclick = () => {
-    const u = regUsername.value.trim(), p = regPassword.value.trim();
-    if(!u||!p){ registerError.innerText='Enter username and password.'; return; }
-    let users=getUsers();
-    if(users[u]){ registerError.innerText='Username exists!'; return; }
-    users[u]={password:p,totalScore:0};
-    saveUsers(users);
-    registerError.style.color='green';
-    registerError.innerText='Registered! You can login now.';
-  };
+//// Game state
+let joined = getJoined();        // array of { username, team }
+let users = getUsers();         // map username -> { password, totalScore }
+let teamA = [], teamB = [];
+let idxA = 0, idxB = 0;         // rotation indices
+let currentOver = 1;
+let currentP1 = null, currentP2 = null; // usernames for this over
+let stageState = 'lobby'; // 'lobby','p1','p2','result'
 
-  loginBtn.onclick = () => {
-    const u = loginUsername.value.trim(), p = loginPassword.value.trim();
-    if(!u||!p){ loginError.innerText='Enter username and password.'; return; }
-    let users=getUsers();
-    if(!users[u] || users[u].password!==p){ loginError.innerText='Invalid username or password.'; return; }
-    loginError.innerText='';
-    player1Name=u;
-    // For demo, assign second player automatically if another exists
-    let names=Object.keys(users).filter(x=>x!==u);
-    if(names.length>0) player2Name=names[0]; else player2Name='Player2';
-    startGame();
-  };
+//// Helpers for players
+function refreshUserSelect(){
+  // populate select with registered usernames not necessarily joined
+  selectUser.innerHTML = '<option value="">-- select registered user --</option>';
+  users = getUsers();
+  Object.keys(users).forEach(u => {
+    const opt = document.createElement('option'); opt.value = u; opt.textContent = u + ' (score:'+users[u].totalScore+')';
+    selectUser.appendChild(opt);
+  });
+}
+function refreshJoined(){
+  joined = getJoined();
+  teamA = joined.filter(p => p.team === 'A').map(p=>p.username);
+  teamB = joined.filter(p => p.team === 'B').map(p=>p.username);
+  // show joined list
+  playersList.innerHTML = '';
+  joined.forEach((p, i) => {
+    const row = document.createElement('div'); row.className = 'player-row';
+    const left = document.createElement('div'); left.innerHTML = `${i+1}. <strong>${p.username}</strong>`;
+    const right = document.createElement('div');
+    const tag = document.createElement('span'); tag.className = 'tag ' + (p.team==='A'?'teamA':'teamB'); tag.innerText = p.team==='A'?'Team A':'Team B';
+    const score = document.createElement('div'); score.className='muted'; score.style.marginLeft='8px'; score.style.fontSize='13px';
+    const s = (getUsers()[p.username]||{totalScore:0}).totalScore;
+    score.textContent = 'score: '+s;
+    right.appendChild(tag); right.appendChild(score);
+    row.appendChild(left); row.appendChild(right);
+    playersList.appendChild(row);
+  });
+  teamACount.textContent = teamA.length;
+  teamBCount.textContent = teamB.length;
+  btnStart.classList.toggle('disabled', !(teamA.length>0 && teamB.length>0));
+  if (!teamA.length) btnStart.classList.add('disabled');
+  if (!teamB.length) btnStart.classList.add('disabled');
+}
 
-  // Game Elements
-  const player1Stage = document.getElementById('player1Stage');
-  const player2Stage = document.getElementById('player2Stage');
-  const resultStage = document.getElementById('resultStage');
-  const p1Label = document.getElementById('p1Label');
-  const p2Label = document.getElementById('p2Label');
-  const player1ResultLabel = document.getElementById('player1ResultLabel');
-  const player2ResultLabel = document.getElementById('player2ResultLabel');
-  const p1Inputs = Array.from(document.querySelectorAll('#p1Digits input'));
-  const p2Inputs = Array.from(document.querySelectorAll('#p2Digits input'));
-  const p1Submit = document.getElementById('p1Submit');
-  const p2Submit = document.getElementById('p2Submit');
-  const error1 = document.getElementById('error1');
-  const error2 = document.getElementById('error2');
-  const summary = document.getElementById('summary');
-  const player1Result = document.getElementById('player1Result');
-  const player2Result = document.getElementById('player2Result');
-  const scoreboard = document.getElementById('scoreboard');
-  const resetBtn = document.getElementById('resetBtn');
+//// Registration & lobby actions
+btnRegister.addEventListener('click', ()=>{
+  const u = regUser.value.trim(), p = regPass.value.trim();
+  if(!u || !p){ regMsg.style.color='crimson'; regMsg.textContent = 'Enter username & password'; return; }
+  users = getUsers();
+  if(users[u]){ regMsg.style.color='crimson'; regMsg.textContent = 'Username already exists'; return; }
+  users[u] = { password: p, totalScore: 0 };
+  saveUsers(users);
+  regMsg.style.color='green'; regMsg.textContent = 'Registered! Select and join from the lobby';
+  regUser.value=''; regPass.value='';
+  refreshUserSelect();
+});
 
-  let p1Digits = '';
+btnClearUsers.addEventListener('click', ()=>{
+  if(!confirm('Clear all registered users? (will also clear joined lobby)')) return;
+  localStorage.removeItem('game_users'); localStorage.removeItem('game_joined');
+  users = {}; joined = [];
+  refreshUserSelect(); refreshJoined(); regMsg.textContent='Cleared';
+});
 
-  function setupAutoFocus(inputs){
-    inputs.forEach((input,i)=>{
-      input.addEventListener('input',()=>{ input.value=input.value.replace(/[^0-6]/g,''); if(input.value&&i<inputs.length-1) inputs[i+1].focus(); });
-      input.addEventListener('keydown',(e)=>{ if(e.key==='Backspace'&&!input.value&&i>0) inputs[i-1].focus(); });
+btnJoin.addEventListener('click', ()=>{
+  const u = selectUser.value;
+  const teamChoice = document.querySelector('input[name="teamChoice"]:checked')?.value;
+  if(!u){ joinMsg.style.color='crimson'; joinMsg.textContent = 'Select a registered user'; return; }
+  if(!teamChoice){ joinMsg.style.color='crimson'; joinMsg.textContent = 'Select a team'; return; }
+  // prevent same username joining twice
+  joined = getJoined();
+  if(joined.some(j => j.username === u)){ joinMsg.style.color='crimson'; joinMsg.textContent = 'Player already joined'; return; }
+  joined.push({ username: u, team: teamChoice==='A' ? 'A' : 'B' });
+  saveJoined(joined);
+  joinMsg.style.color='green'; joinMsg.textContent = `Joined ${u} to Team ${teamChoice}`;
+  refreshJoined();
+});
+
+btnRemove.addEventListener('click', ()=>{
+  const sel = selectUser.value;
+  if(!sel){ joinMsg.style.color='crimson'; joinMsg.textContent='Select user to remove from joined players (if joined)'; return; }
+  joined = getJoined();
+  const before = joined.length;
+  joined = joined.filter(j => j.username !== sel);
+  saveJoined(joined);
+  if(joined.length === before){ joinMsg.style.color='crimson'; joinMsg.textContent='User not in joined list'; }
+  else { joinMsg.style.color='green'; joinMsg.textContent='Removed from lobby'; }
+  refreshJoined();
+});
+
+btnResetLobby.addEventListener('click', ()=>{
+  if(!confirm('Reset lobby? This will remove all joined players (registered accounts remain).')) return;
+  localStorage.removeItem('game_joined');
+  joined=[]; refreshJoined(); joinMsg.textContent='Lobby reset';
+});
+
+//// Start game
+btnStart.addEventListener('click', ()=>{
+  joined = getJoined();
+  if(!(joined.filter(p=>p.team==='A').length>0 && joined.filter(p=>p.team==='B').length>0)){
+    alert('Need at least one player in each team to start');
+    return;
+  }
+  // initialize rotation indices if teams changed
+  idxA = 0; idxB = 0; currentOver = 1;
+  stageState = 'p1';
+  setupRound();
+});
+
+//// Prepare next match players and show P1 input
+function setupRound(){
+  // compose current team player lists (ordered by join time)
+  joined = getJoined();
+  teamA = joined.filter(p=>p.team==='A').map(p=>p.username);
+  teamB = joined.filter(p=>p.team==='B').map(p=>p.username);
+  if(teamA.length===0 || teamB.length===0){ alert('Not enough players'); return; }
+  // wrap indices
+  if(idxA >= teamA.length) idxA = 0;
+  if(idxB >= teamB.length) idxB = 0;
+  currentP1 = teamA[idxA];
+  currentP2 = teamB[idxB];
+  // update UI labels
+  overDisplay.textContent = 'Over ' + currentOver;
+  curP1.textContent = currentP1 + ' (Team A)';
+  curP2.textContent = currentP2 + ' (Team B)';
+  // show P1 stage
+  showP1();
+}
+
+function showP1(){
+  stageState = 'p1';
+  player1Stage.style.display = 'block';
+  player2Stage.style.display = 'none';
+  resultStage.style.display = 'none';
+  p1NameLabel.textContent = currentP1;
+  // clear inputs
+  p1Digits.forEach(i=>i.value='');
+  p1Digits[0].focus();
+  err1.textContent = '';
+}
+
+function showP2(){
+  stageState = 'p2';
+  player1Stage.style.display = 'none';
+  player2Stage.style.display = 'block';
+  resultStage.style.display = 'none';
+  p2NameLabel.textContent = currentP2;
+  p2Digits.forEach(i=>i.value='');
+  p2Digits[0].focus();
+  err2.textContent = '';
+}
+
+/// input helpers (auto-advance/backspace)
+function setupAuto(inputs){
+  inputs.forEach((input,i)=>{
+    input.addEventListener('input',()=>{
+      input.value = input.value.replace(/[^0-6]/g,'');
+      if(input.value && i < inputs.length-1) inputs[i+1].focus();
     });
-  }
-  setupAutoFocus(p1Inputs);
-  setupAutoFocus(p2Inputs);
-
-  function startGame(){
-    document.getElementById('authStage').style.display='none';
-    p1Label.innerText=`${player1Name} — Enter 6 digits (0–6)`;
-    p2Label.innerText=`${player2Name} — Enter 6 digits (0–6)`;
-    player1ResultLabel.innerText=`${player1Name} Digits:`;
-    player2ResultLabel.innerText=`${player2Name} Digits:`;
-    player1Stage.style.display='block';
-    p1Inputs[0].focus();
-  }
-
-  function isValidInputArray(inputs){ return inputs.every(input=>/^[0-6]$/.test(input.value)); }
-  function getInputString(inputs){ return inputs.map(input=>input.value).join(''); }
-  function sumDigitsBeforeMatch(p1,p2){ let sum=0; for(let i=0;i<6;i++){ if(p1[i]===p2[i]) break; sum+=Number(p1[i]); } return sum; }
-
-  p1Submit.addEventListener('click',()=>{
-    if(!isValidInputArray(p1Inputs)){ error1.innerText='Enter exactly 6 digits (0–6).'; return; }
-    error1.innerText='';
-    p1Digits=getInputString(p1Inputs);
-    player1Stage.style.display='none';
-    player2Stage.style.display='block';
-    p2Inputs.forEach(i=>i.value='');
-    p2Inputs[0].focus();
+    input.addEventListener('keydown',(e)=>{
+      if(e.key === 'Backspace' && !input.value && i>0) inputs[i-1].focus();
+    });
   });
+}
+setupAuto(p1Digits);
+setupAuto(p2Digits);
 
-  p2Submit.addEventListener('click',()=>{
-    if(!isValidInputArray(p2Inputs)){ error2.innerText='Enter exactly 6 digits (0–6).'; return; }
-    error2.innerText='';
-    player2Stage.style.display='none';
-    const p2Digits=getInputString(p2Inputs);
-    showResult(p1Digits,p2Digits);
-  });
-
-  function showResult(p1,p2){
-    resultStage.style.display='block';
-    player1Result.innerHTML='';
-    player2Result.innerHTML='';
-    let hits=[];
-    for(let i=0;i<6;i++){ if(p1[i]===p2[i]) hits.push({pos:i,digit:p1[i]}); }
-    const roundScore=sumDigitsBeforeMatch(p1,p2);
-    // Update total score in localStorage
-    let users=getUsers();
-    if(users[player1Name]){ users[player1Name].totalScore+=(roundScore); saveUsers(users); }
-    summary.innerText=hits.length>0? `${player1Name} is OUT! Round score: ${roundScore}`:`${player1Name} is SAFE! Round score: ${roundScore}`;
-
-    for(let i=0;i<6;i++){
-      const span1=document.createElement('span');
-      span1.className='match '+(hits.some(h=>h.pos===i)?'hit':'ok'); span1.innerText=p1[i]; player1Result.appendChild(span1);
-      const span2=document.createElement('span');
-      span2.className='match '+(hits.some(h=>h.pos===i)?'hit':'ok'); span2.innerText=p2[i]; player2Result.appendChild(span2);
-    }
-
-    scoreboard.innerText=`${player1Name} total score: ${users[player1Name].totalScore}`;
+function isValidDigits(arr){ return arr.every(i => /^[0-6]$/.test(i.value)); }
+function getDigitsStr(arr){ return arr.map(i => i.value).join(''); }
+function sumBeforeFirstMatch(p1,p2){
+  let sum = 0;
+  for(let i=0;i<p1.length;i++){
+    if(p1[i] === p2[i]) break;
+    sum += Number(p1[i]);
   }
+  return sum;
+}
 
-  resetBtn.addEventListener('click',()=>{
-    p1Inputs.forEach(i=>i.value=''); p2Inputs.forEach(i=>i.value=''); p1Digits='';
-    player1Stage.style.display='block'; player2Stage.style.display='none';
-    resultStage.style.display='none'; error1.innerText=''; error2.innerText='';
-    p1Inputs[0].focus();
+//// P1 submit
+p1Submit.addEventListener('click', ()=>{
+  if(!isValidDigits(p1Digits)){ err1.textContent = 'Enter exactly 6 digits (0–6).'; return; }
+  err1.textContent = '';
+  // store P1 value in temp state and show P2 stage
+  window._tempP1 = getDigitsStr(p1Digits);
+  showP2();
+});
+
+//// P2 submit -> compute result
+p2Submit.addEventListener('click', ()=>{
+  if(!isValidDigits(p2Digits)){ err2.textContent = 'Enter exactly 6 digits (0–6).'; return; }
+  err2.textContent = '';
+  const p1 = window._tempP1 || '';
+  const p2 = getDigitsStr(p2Digits);
+  computeResult(p1,p2);
+});
+
+//// Compute result and update scores + UI
+function computeResult(p1,p2){
+  // find exact matches
+  const hits = [];
+  for(let i=0;i<6;i++){ if(p1[i] === p2[i]) hits.push({pos:i+1,digit:p1[i]}); }
+  const roundScore = sumBeforeFirstMatch(p1,p2); // sum of Player1 digits before first exact match
+  // persist roundScore to currentP1 user's totalScore
+  users = getUsers();
+  if(users[currentP1]){
+    users[currentP1].totalScore = (users[currentP1].totalScore || 0) + roundScore;
+    saveUsers(users);
+  }
+  // show results
+  resultStage.style.display = 'block';
+  summary.textContent = hits.length > 0 ? `${currentP1} is OUT! Round score: ${roundScore}` : `${currentP1} is SAFE! Round score: ${roundScore}`;
+  // show both players digits with highlights
+  resultP1.innerHTML = ''; resultP2.innerHTML = '';
+  for(let i=0;i<6;i++){
+    const s1 = document.createElement('span'); s1.className = 'match ' + (hits.some(h=>h.pos===i+1)?'hit':'ok'); s1.textContent = p1[i]; resultP1.appendChild(s1);
+    const s2 = document.createElement('span'); s2.className = 'match ' + (hits.some(h=>h.pos===i+1)?'hit':'ok'); s2.textContent = p2[i]; resultP2.appendChild(s2);
+  }
+  resultP1Name.textContent = currentP1;
+  resultP2Name.textContent = currentP2;
+  // show matched positions detail
+  if(hits.length>0) matchDetails.textContent = 'Matched positions: ' + hits.map(h => `${h.pos} (digit ${h.digit})`).join(', ');
+  else matchDetails.textContent = 'No exact matches.';
+  // update scoreboard (team totals + individual totals)
+  updateScoreboardUI();
+  // advance rotation indices for next Over when user clicks Next Over
+  stageState = 'result';
+}
+
+function updateScoreboardUI(){
+  users = getUsers();
+  // compute team totals (sum of totalScore of players in each team)
+  const joinedList = getJoined();
+  let teamAScore = 0, teamBScore = 0;
+  joinedList.forEach(j => {
+    const u = users[j.username] || { totalScore: 0 };
+    if(j.team === 'A') teamAScore += (u.totalScore || 0);
+    if(j.team === 'B') teamBScore += (u.totalScore || 0);
   });
+  scoreboard.innerHTML = `<div><strong>Team A total:</strong> ${teamAScore} &nbsp;&nbsp; <strong>Team B total:</strong> ${teamBScore}</div>
+    <div style="margin-top:8px"><strong>Players:</strong></div>` +
+    joinedList.map(j => {
+      const s = (users[j.username]||{totalScore:0}).totalScore;
+      return `<div style="margin-top:6px">${j.username} — ${j.team === 'A' ? '<span class="tag teamA">Team A</span>' : '<span class="tag teamB">Team B</span>'} &nbsp;&nbsp; score: ${s}</div>`;
+    }).join('');
+}
+
+//// Next Over button logic: rotate players and go to next Over (P1 stage of next)
+nextOverBtn.addEventListener('click', ()=>{
+  // rotate indices forward
+  idxA = (idxA + 1) % (teamA.length || 1);
+  idxB = (idxB + 1) % (teamB.length || 1);
+  currentOver++;
+  // move to next pair
+  setupRound();
+});
+
+endGameBtn.addEventListener('click', ()=>{
+  if(!confirm('End game and reset over/rotation? Scores will persist.')) return;
+  idxA = idxB = 0; currentOver = 1;
+  stageState = 'lobby';
+  player1Stage.style.display = player2Stage.style.display = resultStage.style.display = 'none';
+  overDisplay.textContent = 'Over 1';
+});
+
+//// When the window loads, populate selects and joined list
+window.addEventListener('load', ()=>{
+  refreshUserSelect();
+  refreshJoined();
+  // if joined list present, display scoreboard initial values
+  if(getJoined().length) updateScoreboardUI();
+});
+
+//// keep UI in sync when storage changes (optional)
+window.addEventListener('storage', ()=>{
+  // another tab changed localStorage
+  refreshUserSelect(); refreshJoined(); updateScoreboardUI();
+});
+
 </script>
-
 </body>
 </html>
